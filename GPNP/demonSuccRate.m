@@ -3,7 +3,7 @@
 clc; clear; close all; 
 addpath(genpath(pwd));
 
-test    = 2; 
+test    = 1; 
 noS     = 100;
 problem = {'CS','QCS'};
 switch  test
