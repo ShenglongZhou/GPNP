@@ -45,8 +45,8 @@ x         = zeros(n,1);
 xo        = zeros(n,1);
 bt        = b';
 Fnorm     = @(var)norm(var)^2;
-funchand  = ~isa(A,'function_handle');
-if  funchand
+notfunhd  = ~isa(A,'function_handle');
+if  notfunhd
     gx    = At*b; 
     Atb   = gx;
     OBJ   = zeros(5,1);
@@ -82,7 +82,7 @@ for iter = 1:maxit
         [subu,Tu] = maxk(x-alpha*gx,s,'ComparisonMethod','abs');
         u         = xo; 
         u(Tu)     = subu;  
-        if funchand  
+        if notfunhd  
            ATu    = A(:,Tu);
         end     
         Aub       = Axb(ATu,subu,u);   
@@ -101,9 +101,9 @@ for iter = 1:maxit
     mark = nnz(sT-Tx)==0;
     Tx   = sT;
     eps  = 1e-4;
-    if  mark || normg < 1e-4 || (alpha0==1 && funchand)
+    if  mark || normg < 1e-4 || (alpha0==1 && notfunhd)
         v     = xo; 
-        if funchand  
+        if notfunhd  
            if  s   <  2000 && m <= 2e4
                subv = (ATu'*ATu)\(bt*ATu)'; 
                eps  = 1e-10;
@@ -158,7 +158,7 @@ for iter = 1:maxit
     else
        count = 0; 
     end
-    
+
     if  normg<tol || fx < tolF  || ...
         count  || (std(OBJ)<eps*(1+obj)) 
         if count && fmin < fx; x=xmin; fx=fmin; end
@@ -183,7 +183,7 @@ end
 
 %--------------------------------------------------------------------------
 function diff = Axb(AT,xT,x)
-     if  funchand
+     if  notfunhd
          diff = AT*xT-b; 
      else
          diff = A(x)-b;
@@ -192,7 +192,7 @@ end
 
 %--------------------------------------------------------------------------
 function grad = AtAxb(Axb)
-     if  funchand
+     if  notfunhd
          grad = At*Axb;
      else
          grad = At(Axb); 
@@ -204,7 +204,6 @@ function z = supp(x,T)
       z    = zeros(n,1);
       z(T) = x;
 end
-
 end
 
 
@@ -215,13 +214,16 @@ function [sigma,J,flag,m,alpha0,gamma,thd,disp,tol,tolF,maxit]=set_parameters(s,
     m         = length(b);
     flag      = 1;
     alpha0    = 5;
-    funchand  = ~isa(A,'function_handle'); 
-    if m/n   >= 1/6 && s/n <= 0.05 && n >= 1e4 && funchand
-       alpha0 = 1;
+    gamma     = 0.5;
+    notfunhd  = isa(A,'function_handle'); 
+    if m/n   >= 1/6 && s/n <= 0.05 && n >= 1e4 && ~notfunhd
+       alpha0 = 1; 
+       gamma  = 0.1; 
+    elseif notfunhd
+       gamma  = 0.1;  
     end
-    gamma     = alpha0/10;
-    if s/n  <= 0.05
-       thd   = ceil(log2(2+s)*50);
+    if s/n   <= 0.05
+       thd    = ceil(log2(2+s)*50); 
     else
         if  n    > 1e3 
             thd  = 100;
