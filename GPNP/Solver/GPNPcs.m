@@ -45,19 +45,19 @@ x         = zeros(n,1);
 xo        = zeros(n,1);
 bt        = b';
 Fnorm     = @(var)norm(var)^2;
-notfunhd  = ~isa(A,'function_handle');
-if  notfunhd
-    gx    = At*b; 
-    Atb   = gx;
-    OBJ   = zeros(5,1);
-else         
+funhd     = isa(A,'function_handle');
+if  funhd
     ATu   = A;
     gx    = At(b);
     Atb   = gx;
     OBJ   = zeros(3,1);
     suppz = @(z,t)supp(z,t);
     sub   = @(z,t)z(t,:);
-    subH  = @(z,T)(sub(At(A(suppz(z,T))),T)); 
+    subH  = @(z,T)(sub(At(A(suppz(z,T))),T));     
+else
+    gx    = At*b; 
+    Atb   = gx;
+    OBJ   = zeros(5,1);
 end
 fx        = Fnorm(b);
 [~,Tx]    = maxk(gx,s,'ComparisonMethod','abs');
@@ -82,8 +82,8 @@ for iter = 1:maxit
         [subu,Tu] = maxk(x-alpha*gx,s,'ComparisonMethod','abs');
         u         = xo; 
         u(Tu)     = subu;  
-        if notfunhd  
-           ATu    = A(:,Tu);
+        if ~funhd  
+            ATu   = A(:,Tu);
         end     
         Aub       = Axb(ATu,subu,u);   
         fu        = Fnorm(Aub);  
@@ -101,19 +101,19 @@ for iter = 1:maxit
     mark = nnz(sT-Tx)==0;
     Tx   = sT;
     eps  = 1e-4;
-    if  mark || normg < 1e-4 || (alpha0==1 && notfunhd)
+    if  mark || normg < 1e-4 || (alpha0==1 && ~funhd)
         v     = xo; 
-        if notfunhd  
+        if funhd  
+           cgit     = min(20,5*iter);   
+           subv     = my_cg(@(var)subH(var,Tu),Atb(Tu),1e-10*n,cgit,zeros(s,1));
+        else 
            if  s   <  2000 && m <= 2e4
                subv = (ATu'*ATu)\(bt*ATu)'; 
                eps  = 1e-10;
            else
                cgit = min(20,2*iter);  
                subv = my_cg(@(var)((ATu*var)'*ATu)',Atb(Tu),1e-30,cgit,zeros(s,1)); 
-           end 
-        else 
-           cgit     = min(20,5*iter);   
-           subv     = my_cg(@(var)subH(var,Tu),Atb(Tu),1e-10*n,cgit,zeros(s,1));
+           end           
         end 
         v(Tu)       = subv; 
         Avb         = Axb(ATu,subv,v); 
@@ -183,19 +183,19 @@ end
 
 %--------------------------------------------------------------------------
 function diff = Axb(AT,xT,x)
-     if  notfunhd
-         diff = AT*xT-b; 
+     if  funhd
+         diff = A(x)-b; 
      else
-         diff = A(x)-b;
+         diff = AT*xT-b;
      end
 end
 
 %--------------------------------------------------------------------------
 function grad = AtAxb(Axb)
-     if  notfunhd
-         grad = At*Axb;
+     if  funhd
+         grad = At(Axb);
      else
-         grad = At(Axb); 
+         grad = At*Axb;
      end
 end
 
@@ -215,11 +215,11 @@ function [sigma,J,flag,m,alpha0,gamma,thd,disp,tol,tolF,maxit]=set_parameters(s,
     flag      = 1;
     alpha0    = 5;
     gamma     = 0.5;
-    notfunhd  = isa(A,'function_handle'); 
-    if m/n   >= 1/6 && s/n <= 0.05 && n >= 1e4 && ~notfunhd
+    funhd     = isa(A,'function_handle');  
+    if m/n   >= 1/6 && s/n <= 0.05 && n >= 1e4 && ~funhd
        alpha0 = 1; 
        gamma  = 0.1; 
-    elseif notfunhd
+    elseif funhd
        gamma  = 0.1;  
     end
     if s/n   <= 0.05
