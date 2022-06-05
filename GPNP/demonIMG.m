@@ -1,7 +1,7 @@
 clc; clear all; close all; warning off
 addpath(genpath(pwd));
 
-test  = 1;
+test  = 2;
 
 switch test
     case 1; Img0 = im2double(imread('zhou.png')); 
@@ -26,13 +26,10 @@ for k   = 1 : d
     x         = out0.x;
     time      = toc(t);
     xd        = reshape(x,[d1 d2]);  
-    xd        = out.W(xd) +  out.Ibar; 
-   
+    xd        = out.W(xd) +  out.Ibar;   
     xdd(:,:,k)= xd;
     snr       = norm(out.I-xd,'fro')^2;           
 end
-
- 
 
 snr   = 10*log10(d1*d2*d./snr);
 figure('Renderer', 'painters', 'Position', [900 600 450 230])
@@ -50,5 +47,3 @@ for i   = 0:1
    set(sub, 'Position',pos+[-0.05*(2-i),-0.05,0.12,0.05] )
    ax.XLabel.Visible = 'on';
 end
-
-result = [snr time];
