@@ -28,7 +28,7 @@ for k   = 1 : d
     time      = toc(t);
     xd        = reshape(x,[d1 d2]);  
     xd        = out.W(xd) +  out.Ibar;   
-    xdd(:,:,k)= xd;
+    xdd(:,:,k)= xd; if d==1; xdd(:,:,2)= xd; xdd(:,:,3)= xd; end
     snr       = norm(out.I-xd,'fro')^2;           
 end
 
