@@ -205,25 +205,24 @@ function [sigma,J,alpha0,alpha00,gamma,thd,disp,tol,tolF,maxit]=set_parameters(s
 end
 
 % conjugate gradient-------------------------------------------------------
-function x = my_cg(fx,rhs,cgtol,cgit,x)
-    r = rhs;  
-    e = sum(r.*r);
+function x = my_cg(fx,b,cgtol,cgit,x)
+    if ~isa(fx,'function_handle'); fx = @(v)fx*v; end
+    r = b;
+    if nnz(x)>0; r = b - fx(x);  end
+    e = norm(r,'fro')^2;
     t = e;
+    p = r;
     for i = 1:cgit  
         if e < cgtol*t; break; end
-        if  i == 1  
-            p = r;
-        else
-            p = r + (e/e0)*p;
-        end  
-        w  = fx(p);  
-        a  = e/(sum(p.*w)+1e-20);
+        w  = fx(p);
+        pw = p.*w;
+        a  = e/sum(pw(:));
         x  = x + a * p;
         r  = r - a * w;
         e0 = e;
-        e  = sum(r.*r);
-    end       
-   
+        e  = norm(r,'fro')^2;
+        p  = r + (e/e0)*p;
+    end 
 end
 
 function xBest=bestMatch(x1,x2)
