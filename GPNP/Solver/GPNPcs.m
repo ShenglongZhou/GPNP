@@ -107,7 +107,7 @@ for iter = 1:maxit
            cgit     = min(20,5*iter);   
            subv     = my_cg(@(var)subH(var,Tu),Atb(Tu),1e-10*n,cgit,zeros(s,1));
         else 
-           if  s   <  2000 && m <= 2e4
+           if  s    <  2000 && m <= 2e4
                subv = (ATu'*ATu)\(bt*ATu)'; 
                eps  = 1e-10;
            else
@@ -128,7 +128,7 @@ for iter = 1:maxit
     end
     
     % Stop criteria  
-	error     = Fnorm(gx(Tu)); 
+    error     = Fnorm(gx(Tu)); 
     obj       = sqrt(fx);
     OBJ       = [OBJ(2:end); obj];
     if disp 
